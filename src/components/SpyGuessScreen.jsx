@@ -3,7 +3,7 @@ import { Search, TriangleAlert, Clock } from 'lucide-react';
 import { WORDS } from '../utils/constants';
 import { shuffleArray } from '../utils/helpers';
 
-export default function SpyGuessScreen({ spyNames, context, selectedWord, onWordSelect, onGuess }) {
+export default function SpyGuessScreen({ spyNames, context, selectedWord, onWordSelect, onGuess, onBack }) {
   const shuffled = useMemo(() => shuffleArray(WORDS), []);
   
   const spyNamesStr = spyNames.join(' و ');
@@ -32,6 +32,7 @@ export default function SpyGuessScreen({ spyNames, context, selectedWord, onWord
   const Icon = current.icon;
 
   return (
+    
     <div className="absolute inset-0 flex flex-col items-center p-4 screen-enter overflow-y-auto bg-white">
       <div className="flex flex-col gap-5 w-full max-w-lg pb-6">
         {/* Context Banner */}
@@ -46,6 +47,21 @@ export default function SpyGuessScreen({ spyNames, context, selectedWord, onWord
             </div>
           </div>
         </div>
+
+        <div className="flex items-center justify-between">
+  <button
+    onClick={onBack}
+    className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"
+  >
+    ←
+  </button>
+
+  <div className="text-sm text-gray-400">
+    حدس جاسوس
+  </div>
+
+  <div className="w-10" />
+</div>
 
         {/* Spy Names */}
         <div className="text-center bg-gray-50 rounded-2xl p-4">

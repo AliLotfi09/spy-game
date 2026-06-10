@@ -6,49 +6,23 @@ const STORAGE_KEY = 'spy_game_state';
 
 function saveState(state) {
   try {
-    const serializable = {
-      screen: state.screen,
-      playerCount: state.playerCount,
-      players: state.players,
-      spyCount: state.spyCount,
-      timerDuration: state.timerDuration,
-      spyIndices: state.spyIndices,
-      secretWord: state.secretWord,
-      timeLeft: state.timeLeft,
-      currentRevealIndex: state.currentRevealIndex,
-      selectedVote: state.selectedVote,
-      selectedWord: state.selectedWord,
-      context: state.context,
-      result: state.result,
-      timerRunning: !!state.timerRef.current,
-      timestamp: Date.now(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
-  } catch (e) {
-    // storage full or unavailable
-  }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
 }
 
 function loadState() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Only restore if saved within last 2 hours
-      if (Date.now() - parsed.timestamp < 2 * 60 * 60 * 1000) {
-        return parsed;
-      }
-    }
-  } catch (e) {
-    // invalid JSON
+    const s = localStorage.getItem(STORAGE_KEY);
+    return s ? JSON.parse(s) : null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 function clearState() {
   try {
     localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {}
+  } catch {}
 }
 
 export function useGame() {
@@ -59,27 +33,47 @@ export function useGame() {
   const [players, setPlayers] = useState(saved?.players || []);
   const [spyCount, setSpyCount] = useState(saved?.spyCount || 1);
   const [timerDuration, setTimerDuration] = useState(saved?.timerDuration || DEFAULT_TIMER_MINUTES);
+
   const [spyIndices, setSpyIndices] = useState(saved?.spyIndices || []);
   const [secretWord, setSecretWord] = useState(saved?.secretWord || '');
+
   const [timeLeft, setTimeLeft] = useState(saved?.timeLeft || timerDuration * 60);
-  const [currentRevealIndex, setCurrentRevealIndex] = useState(saved?.currentRevealIndex || 0);
-  const [selectedVote, setSelectedVote] = useState(saved?.selectedVote || -1);
-  const [selectedWord, setSelectedWord] = useState(saved?.selectedWord || '');
-  const [context, setContext] = useState(saved?.context || '');
-  const [result, setResult] = useState(saved?.result || null);
+
+  const [currentRevealIndex, setCurrentRevealIndex] = useState(0);
+  const [selectedVote, setSelectedVote] = useState(-1);
+  const [selectedWord, setSelectedWord] = useState('');
+  const [context, setContext] = useState('');
+  const [result, setResult] = useState(null);
 
   const timerRef = useRef(null);
-  const startTimeRef = useRef(null);
-  const startValueRef = useRef(saved?.timeLeft || timerDuration * 60);
+  const startRef = useRef(0);
+  const baseRef = useRef(0);
 
   const stopTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
   }, []);
 
-  // Save state on every meaningful change
+  const startTimer = useCallback(() => {
+    stopTimer();
+    startRef.current = Date.now();
+    baseRef.current = timeLeft;
+
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startRef.current) / 1000);
+      const next = Math.max(0, baseRef.current - elapsed);
+
+      setTimeLeft(next);
+
+      if (next <= 0) {
+        stopTimer();
+        setContext('timeout');
+        setScreen('spy-guess');
+      }
+    }, 250);
+  }, [timeLeft, stopTimer]);
+
+  // SAVE SAFE STATE (FIXED)
   useEffect(() => {
     saveState({
       screen,
@@ -89,141 +83,118 @@ export function useGame() {
       timerDuration,
       spyIndices,
       secretWord,
-      timeLeft,
-      currentRevealIndex,
-      selectedVote,
-      selectedWord,
-      context,
-      result,
-      timerRef,
+      timeLeft
     });
-  }, [screen, playerCount, players, spyCount, timerDuration, spyIndices, secretWord, timeLeft, currentRevealIndex, selectedVote, selectedWord, context, result]);
+  }, [screen, playerCount, players, spyCount, timerDuration, spyIndices, secretWord, timeLeft]);
 
-  // Resume timer if restoring from playing state
-  useEffect(() => {
-    if (screen === 'playing' && saved?.timerRunning) {
-      startTimer();
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => stopTimer();
-  }, [stopTimer]);
-
-  const startTimer = useCallback(() => {
-    stopTimer();
-    startTimeRef.current = Date.now();
-    startValueRef.current = timeLeft;
-
-    timerRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      const newTime = Math.max(0, startValueRef.current - elapsed);
-      setTimeLeft(newTime);
-
-      if (newTime <= 0) {
-        stopTimer();
-        setContext('timeout');
-        setScreen('spy-guess');
-      }
-    }, 250);
-  }, [timeLeft, stopTimer]);
-
-  const initGame = useCallback((finalNames) => {
+  const initGame = useCallback((names) => {
     const word = WORDS[Math.floor(Math.random() * WORDS.length)];
-    const indices = shuffleArray(Array.from({ length: finalNames.length }, (_, i) => i));
-    const spies = indices.slice(0, spyCount);
 
-    setPlayers(finalNames);
-    setSecretWord(word);
+    const shuffled = shuffleArray([...Array(names.length).keys()]);
+    const spies = shuffled.slice(0, spyCount);
+
+    setPlayers(names);
     setSpyIndices(spies);
+    setSecretWord(word);
+
     setCurrentRevealIndex(0);
-    setTimeLeft(timerDuration * 60);
     setSelectedVote(-1);
     setSelectedWord('');
-    setContext('');
     setResult(null);
+
+    setTimeLeft(timerDuration * 60);
+
     setScreen('reveal-pass');
   }, [spyCount, timerDuration]);
 
-  const handleVoteConfirm = useCallback(() => {
-    if (spyIndices.includes(selectedVote)) {
-      setContext('caught');
-      setScreen('spy-guess');
-    } else {
-      setResult({
-        winner: 'locals',
-        message: `${players[selectedVote]} جاسوس نبود!`
-      });
-      setScreen('result');
-    }
-    stopTimer();
-  }, [selectedVote, spyIndices, players, stopTimer]);
-
-  const handleSpyGuess = useCallback((word) => {
-    stopTimer();
-    if (word === secretWord) {
-      setResult({
-        winner: 'spy',
-        message: 'جاسوس کلمه مخفی را درست حدس زد!'
-      });
-    } else {
-      setResult({
-        winner: 'locals',
-        message: 'جاسوس کلمه مخفی را اشتباه حدس زد!'
-      });
-    }
-    setScreen('result');
-  }, [secretWord, stopTimer]);
-
   const handleRevealNext = useCallback(() => {
-    const nextIndex = currentRevealIndex + 1;
-    if (nextIndex < playerCount) {
-      setCurrentRevealIndex(nextIndex);
+    if (currentRevealIndex + 1 < players.length) {
+      setCurrentRevealIndex(v => v + 1);
       setScreen('reveal-pass');
     } else {
       setScreen('playing');
       startTimer();
     }
-  }, [currentRevealIndex, playerCount, startTimer]);
+  }, [currentRevealIndex, players.length, startTimer]);
+
+  const handleVoteConfirm = useCallback(() => {
+    const isSpy = spyIndices.includes(selectedVote);
+
+    if (isSpy) {
+      setContext('caught');
+      setScreen('spy-guess');
+    } else {
+      setResult({
+        winner: 'locals',
+        message: `${players[selectedVote]} جاسوس نبود`
+      });
+      setScreen('result');
+    }
+
+    stopTimer();
+  }, [selectedVote, spyIndices, players, stopTimer]);
+
+  const handleSpyGuess = useCallback((word) => {
+    stopTimer();
+
+    const win = word === secretWord;
+
+    setResult({
+      winner: win ? 'spy' : 'locals',
+      message: win ? 'جاسوس درست حدس زد' : 'جاسوس اشتباه کرد'
+    });
+
+    setScreen('result');
+  }, [secretWord, stopTimer]);
 
   const resetToHome = useCallback(() => {
     stopTimer();
     clearState();
+
     setScreen('home');
-    setPlayerCount(4);
     setPlayers([]);
-    setSpyCount(1);
-    setTimerDuration(DEFAULT_TIMER_MINUTES);
     setSpyIndices([]);
-    setSecretWord('');
-    setTimeLeft(DEFAULT_TIMER_MINUTES * 60);
-    setCurrentRevealIndex(0);
     setSelectedVote(-1);
     setSelectedWord('');
-    setContext('');
     setResult(null);
   }, [stopTimer]);
 
   return {
-    screen, setScreen,
-    playerCount, setPlayerCount,
-    players, setPlayers,
-    spyCount, setSpyCount,
-    timerDuration, setTimerDuration,
+    screen,
+    setScreen,
+
+    playerCount,
+    setPlayerCount,
+
+    players,
+    spyCount,
+    setSpyCount,
+
+    timerDuration,
+    setTimerDuration,
+
     spyIndices,
     secretWord,
     timeLeft,
+
     currentRevealIndex,
-    selectedVote, setSelectedVote,
-    selectedWord, setSelectedWord,
-    context, setContext,
+    selectedVote,
+    setSelectedVote,
+
+    selectedWord,
+    setSelectedWord,
+
+    context,
+    setContext,
+
     result,
+
     initGame,
     startTimer,
     stopTimer,
+    handleRevealNext,
     handleVoteConfirm,
     handleSpyGuess,
-    handleRevealNext,
-    resetToHome,
+    resetToHome
   };
 }

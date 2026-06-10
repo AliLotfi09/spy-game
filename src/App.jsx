@@ -1,13 +1,14 @@
-import React from 'react';
-import { useGame } from './hooks/useGame';
-import HomeScreen from './components/HomeScreen';
-import SetupScreen from './components/SetupScreen';
-import RevealPassScreen from './components/RevealPassScreen';
-import RevealCardScreen from './components/RevealCardScreen';
-import GameScreen from './components/GameScreen';
-import VotingScreen from './components/VotingScreen';
-import SpyGuessScreen from './components/SpyGuessScreen';
-import ResultScreen from './components/ResultScreen';
+import React, { useState, useEffect } from "react";
+import { useGame } from "./hooks/useGame";
+import HomeScreen from "./components/HomeScreen";
+import SetupScreen from "./components/SetupScreen";
+import RevealPassScreen from "./components/RevealPassScreen";
+import RevealCardScreen from "./components/RevealCardScreen";
+import GameScreen from "./components/GameScreen";
+import VotingScreen from "./components/VotingScreen";
+import SpyGuessScreen from "./components/SpyGuessScreen";
+import ResultScreen from "./components/ResultScreen";
+import Loading from "./components/Loading";
 
 export default function App() {
   const game = useGame();
@@ -16,13 +17,24 @@ export default function App() {
     game.initGame(finalNames);
   };
 
+  const handleExit = () => {
+  game.resetToHome();
+  game.setScreen('home');
+};
+
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  setTimeout(() => setLoading(false), 800);
+}, []);
+
   return (
     <div className="h-full w-full relative overflow-hidden bg-white">
-      {game.screen === 'home' && (
-        <HomeScreen onStart={() => game.setScreen('setup')} />
+      {game.screen === "home" && (
+        <HomeScreen onStart={() => game.setScreen("setup")} />
       )}
-      
-      {game.screen === 'setup' && (
+
+      {game.screen === "setup" && (
         <SetupScreen
           playerCount={game.playerCount}
           setPlayerCount={game.setPlayerCount}
@@ -37,21 +49,21 @@ export default function App() {
             game.setPlayers([]);
             game.setSpyCount(1);
             game.setTimerDuration(10);
-            game.setScreen('home');
+            game.setScreen("home");
           }}
         />
       )}
-      
-      {game.screen === 'reveal-pass' && (
+
+      {game.screen === "reveal-pass" && (
         <RevealPassScreen
           playerName={game.players[game.currentRevealIndex]}
           currentNum={game.currentRevealIndex + 1}
           totalNum={game.playerCount}
-          onNext={() => game.setScreen('reveal-card')}
+          onNext={() => game.setScreen("reveal-card")}
         />
       )}
-      
-      {game.screen === 'reveal-card' && (
+
+      {game.screen === "reveal-card" && (
         <RevealCardScreen
           playerName={game.players[game.currentRevealIndex]}
           isSpy={game.spyIndices.includes(game.currentRevealIndex)}
@@ -59,46 +71,41 @@ export default function App() {
           onNext={game.handleRevealNext}
         />
       )}
-      
-      {game.screen === 'playing' && (
+
+      {game.screen === "playing" && (
         <GameScreen
           players={game.players}
           timeLeft={game.timeLeft}
-          onVote={() => game.setScreen('voting')}
-          onSpyReveal={() => {
-            game.stopTimer();
-            game.setContext('reveal');
-            game.setScreen('spy-guess');
-          }}
+          onVote={() => game.setScreen("voting")}
         />
       )}
-      
-      {game.screen === 'voting' && (
+
+      {game.screen === "voting" && (
         <VotingScreen
           players={game.players}
           selectedVote={game.selectedVote}
           onVoteSelect={game.setSelectedVote}
           onConfirm={game.handleVoteConfirm}
-          onBack={() => game.setScreen('playing')}
+          onBack={() => game.setScreen("playing")}
         />
       )}
-      
-      {game.screen === 'spy-guess' && (
+
+      {game.screen === "spy-guess" && (
         <SpyGuessScreen
-          spyNames={game.spyIndices.map(i => game.players[i])}
+          spyNames={game.spyIndices.map((i) => game.players[i])}
           context={game.context}
           selectedWord={game.selectedWord}
           onWordSelect={game.setSelectedWord}
           onGuess={game.handleSpyGuess}
         />
       )}
-      
-      {game.screen === 'result' && game.result && (
+
+      {game.screen === "result" && game.result && (
         <ResultScreen
           result={game.result}
-          spyNames={game.spyIndices.map(i => game.players[i])}
+          spyNames={game.spyIndices.map((i) => game.players[i])}
           secretWord={game.secretWord}
-          onNewGame={() => game.setScreen('setup')}
+          onNewGame={() => game.setScreen("setup")}
           onHome={game.resetToHome}
         />
       )}

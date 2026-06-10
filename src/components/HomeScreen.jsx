@@ -5,31 +5,7 @@ export default function HomeScreen({ onStart }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center p-6 screen-enter bg-white">
       <div className="flex flex-col items-center gap-10 text-center max-w-sm w-full">
-        {/* Animated Spy Logo */}
-        <div className="relative w-36 h-36">
-          {/* Outer rotating ring */}
-          <div className="absolute inset-0 animate-spin-slow">
-            <div className="w-full h-full rounded-full border-2 border-dashed border-gray-200"></div>
-          </div>
-          
-          {/* Inner morphing shape */}
-          <div className="absolute inset-2 bg-black animate-rotate-morph flex items-center justify-center">
-            <div className="relative">
-              {/* Hat */}
-              <div className="w-12 h-3 bg-white mx-auto rounded-t-lg -mb-1"></div>
-              <div className="w-16 h-16 rounded-full border-[3px] border-white flex items-center justify-center mx-auto">
-                {/* Face */}
-                <div className="flex gap-1.5 mt-1">
-                  <div className="w-2 h-2.5 bg-white rounded-full"></div>
-                  <div className="w-2 h-2.5 bg-white rounded-full"></div>
-                </div>
-              </div>
-              {/* Body hint */}
-              <div className="w-8 h-8 border-[3px] border-white rounded-b-full mx-auto -mt-1"></div>
-            </div>
-          </div>
-        </div>
-
+        <img src="/Spy.svg" alt='Spy' className='w-42 '></img>
         {/* Title */}
         <div className="space-y-2">
           <h1 className="text-6xl font-black text-black tracking-tight">

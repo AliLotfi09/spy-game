@@ -3,6 +3,7 @@ import { Minus, Plus, ArrowRight, AlertCircle, Clock } from 'lucide-react';
 import { toPersian } from '../utils/helpers';
 import { MIN_PLAYERS, MAX_PLAYERS, DEFAULT_TIMER_MINUTES, MIN_TIMER_MINUTES, MAX_TIMER_MINUTES } from '../utils/constants';
 import { defaultSpyCount } from '../utils/helpers';
+import PromoBanner from './PromoBanner';
 
 export default function SetupScreen({ 
   playerCount, setPlayerCount, 
@@ -161,6 +162,15 @@ export default function SetupScreen({
             </button>
           </div>
         </div>
+
+        <PromoBanner
+          title="علی لطفی | کُدسفید"
+          subtitle="حمایت از توسعه دهنده"
+          profileSrc="/assets/profile2.jpg"
+          onClick={() =>
+            window.Eitaa.WebApp.openEitaaLink("https://eitaa.com/whitecode")
+          }
+        />
 
         {/* Player Names */}
         <div>

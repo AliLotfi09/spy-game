@@ -1,0 +1,13 @@
+{
+  "ProjectRoot": "/mnt/projects/spy-game",
+  "BuildFolder": "dist",
+  "ZipFileName": "spy.zip",
+  "FtpHost": "88.135.68.3",
+  "RemoteUser": "spygame172@politest.ir",
+  "FtpPassword": "n&I7=T]CHYDO*#q=",
+  "RemotePath": ".",
+  "ExtractScriptUrl": "https://spy.politest.ir/extract.php",
+  "Token": "Pu1rJcPfbbKV9kRmTCwsDlYukwujv6cwLRkVBEfeLecVLIbdVZC4YOz1OqIYUD9z",
+  "HealthUrl": "https://politest.ir",
+  "BuildCommand": "bun run build"
+}

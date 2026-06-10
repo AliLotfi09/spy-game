@@ -180,16 +180,6 @@ export default function GameScreen({ players, timeLeft, onVote, onSpyReveal }) {
             <Vote size={20} />
             <span>شروع رأی‌گیری</span>
           </button>
-          
-          <button
-            onClick={onSpyReveal}
-            className="w-full py-3.5 bg-white text-gray-600 font-semibold rounded-2xl
-                       active:scale-[0.98] transition-transform duration-150 flex items-center justify-center gap-2
-                       border-2 border-gray-200"
-          >
-            <Siren size={18} />
-            <span>جاسوس خودش را لو می‌دهد</span>
-          </button>
         </div>
       </div>
     </div>
